@@ -1,59 +1,54 @@
-# 智慧算术华容道 (Smart Arithmetic Klotski) - 服务器部署指南
 
-## 项目简介
-本项目是一个基于 React 和 TypeScript 开发的纯前端益智游戏。由于采用了原生 ES 模块化加载方案（通过 esm.sh），它不需要复杂的构建编译过程，非常适合直接部署在 Ubuntu 服务器上通过浏览器远程访问。
+# 智慧算术华容道 (Smart Arithmetic Klotski) - 生产环境部署指南
 
-本作品作为**人工智能程序设计作品**，集成了 Gemini AI 导师功能。
+本项目已针对 **Ubuntu 24.04** 服务器环境进行优化。为了消除浏览器控制台的 Tailwind CSS CDN 警告并提升加载速度，我们推荐使用“独立 CLI 编译”方案。
 
 ---
 
-## Ubuntu 24.04 远程部署流程
+## 🚀 完整部署流程 (Ubuntu 24.04)
 
-### 1. 准备服务器环境
-首先，确保你的 Ubuntu 24.04 服务器已更新，并安装 Nginx 作为 Web 服务器。
-
+### 1. 环境准备与 Nginx 安装
 ```bash
-# 更新系统包
 sudo apt update && sudo apt upgrade -y
-
-# 安装 Nginx
-sudo apt install nginx -y
-
-# 启动并设置 Nginx 开机自启
-sudo systemctl start nginx
-sudo systemctl enable nginx
+sudo apt install nginx curl -y
 ```
 
-### 2. 上传程序文件
-将本项目的所有文件上传到服务器的网页根目录（建议路径：`/var/www/smart-klotski`）。
+### 2. 项目文件配置
+创建 Web 根目录并同步代码：
+```bash
+sudo mkdir -p /var/www/smart-klotski
+# 将代码上传至该目录（index.html, App.tsx, tailwind.config.js 等）
+sudo chown -R $USER:$USER /var/www/smart-klotski
+```
+
+### 3. 消除 Tailwind CDN 警告（生产环境优化）
+在服务器上直接生成生产级静态 CSS 文件：
 
 ```bash
-# 创建项目目录
-sudo mkdir -p /var/www/smart-klotski
+cd /var/www/smart-klotski
 
-# 将当前目录下的所有文件拷贝（假设你在项目目录下）
-# 如果你是通过 Git，可以直接在服务器 clone
-sudo cp -r ./* /var/www/smart-klotski/
+# 下载 Tailwind 独立二进制文件 (x64 架构)
+curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64
+chmod +x tailwindcss-linux-x64
 
-# 设置权限，确保 Nginx 有权访问
-sudo chown -R www-data:www-data /var/www/smart-klotski
-sudo chmod -R 755 /var/www/smart-klotski
+# 执行编译（扫描 HTML 和 TSX 文件中的类名并压缩）
+./tailwindcss-linux-x64 -o ./dist/output.css --minify
+
+# 修改 index.html 以应用静态 CSS
+# 建议手动编辑 index.html，注释掉 <script src="...tailwindcss.com"> 
+# 并取消注释 <link href="./dist/output.css" rel="stylesheet">
 ```
 
-### 3. 配置 Nginx
-创建一个新的虚拟主机配置文件来托管游戏。
-
+### 4. Nginx 配置
+创建站点配置：
 ```bash
 sudo nano /etc/nginx/sites-available/smart-klotski
 ```
-
-将以下内容粘贴进去（请将 `your_domain_or_ip` 替换为你的服务器 IP 或域名）：
-
+粘贴以下内容（替换 `your_ip`）：
 ```nginx
 server {
     listen 80;
-    server_name your_domain_or_ip;
-
+    server_name your_ip_or_domain;
     root /var/www/smart-klotski;
     index index.html;
 
@@ -61,49 +56,45 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # 启用 Gzip 压缩以提高加载速度
+    # 静态资源缓存优化
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|json)$ {
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+    }
+
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_types text/plain text/css application/javascript application/json;
 }
 ```
-
-启用配置并重启 Nginx：
-
+启用站点：
 ```bash
-# 启用配置
 sudo ln -s /etc/nginx/sites-available/smart-klotski /etc/nginx/sites-enabled/
-
-# 检查 Nginx 配置语法是否正确
-sudo nginx -t
-
-# 重启 Nginx
-sudo systemctl restart nginx
+sudo nginx -t && sudo systemctl restart nginx
 ```
 
-### 4. 配置防火墙
-确保服务器的 80 端口（HTTP）已开放：
-
+### 5. 防火墙与权限
 ```bash
 sudo ufw allow 'Nginx Full'
-sudo ufw enable
+sudo chown -R www-data:www-data /var/www/smart-klotski
 ```
-
-### 5. 关于 API Key
-本程序使用 `process.env.API_KEY` 调用 Gemini API。
-- **注意**：在纯静态服务器部署中，浏览器环境无法直接读取服务器的 shell 环境变量。
-- **方案**：由于本项目结构简单，程序会自动识别托管平台注入的 `API_KEY`。如果你是私人部署且需要 AI 导师功能正常工作，请确保你在访问该网页的环境中已经配置了相应的 Key 注入，或者根据系统要求在 `index.html` 的 script 标签前部进行简单的 global 定义（生产环境请注意密钥安全）。
 
 ---
 
-## 访问与验证
-打开浏览器，访问 `http://你的服务器IP`。
-1. 如果看到“智慧算术华容道”界面，说明部署成功。
-2. 尝试完成一次游戏，验证底部的 AI 导师是否能正常给出评价。
+## 🛠️ 关于 API_KEY 的安全建议
+由于本项目是纯前端应用，`process.env.API_KEY` 在浏览器端是可见的。
+- **推荐方案**：在 Google AI Studio 中，为你的 API Key 设置 **网站限制 (Referrer restrictions)**，仅允许你的服务器域名或 IP 调用。
+- **配置方法**：在 `index.html` 的 `<head>` 顶部加入以下代码片段（如果服务器不提供环境变量注入）：
+  ```html
+  <script>window.process = { env: { API_KEY: '你的密钥' } };</script>
+  ```
 
-## 维护与更新
-如果你修改了代码，只需将新文件覆盖到 `/var/www/smart-klotski` 目录，无需重启 Nginx，浏览器刷新即可看到效果。
+---
+
+## 💡 为什么这样做？
+1.  **性能**：编译后的 `output.css` 仅包含项目中实际用到的样式，体积减少 90% 以上。
+2.  **专业性**：解决了 `cdn.tailwindcss.com` 在生产环境下的性能警告和潜在的加载延迟。
+3.  **兼容性**：独立 CLI 无需在服务器安装 Node.js 或 NPM，保持了 Ubuntu 系统的简洁。
 
 ---
 **人工智能程序设计作品**
-作者：刘桓语
-部署环境：Ubuntu 24.04 LTS + Nginx
+作者：刘桓语 | 运行环境：Ubuntu 24.04 LTS + Nginx + Tailwind Standalone CLI
