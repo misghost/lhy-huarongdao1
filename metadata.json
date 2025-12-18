@@ -1,0 +1,5 @@
+{
+  "name": "Copy of 智慧算术华容道 (Smart Arithmetic Klotski)",
+  "description": "一款专为三年级学生设计的教育益智游戏。将经典的3x3数字华容道与趣味口算结合，通过解开算术题来移动方块。支持自动打乱（保证有解）、步数统计、计时器以及精美的莫兰迪色系视觉设计。",
+  "requestFramePermissions": []
+}
