@@ -4,17 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智慧算术华容道</title>
+    <title>智慧算术华容道 - 上城区AI普及赛作品</title>
     
-    <!-- 环境变量垫片 -->
     <script>
       window.process = { env: { API_KEY: "" } };
     </script>
 
-    <!-- 开发/预览环境：使用 CDN 确保 UI 正常显示 -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Tailwind 配置：确保 CDN 模式下也能使用自定义颜色 -->
     <script>
       tailwind.config = {
         theme: {
@@ -30,24 +27,28 @@
                 darkblue: '#457b9d',
                 yellowgreen: '#D4E09B',
               }
+            },
+            animation: {
+              'bounce-slow': 'bounce 3s infinite',
             }
           }
         }
       }
     </script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style type="text/tailwindcss">
         @layer base {
           body {
-            @apply bg-[#f0f2f5] overflow-x-hidden overflow-y-auto;
-            font-family: 'Noto Sans SC', 'SimHei', 'Microsoft YaHei', sans-serif;
+            @apply bg-gradient-to-br from-[#f0f4f8] to-[#d7e3ec] min-h-screen;
+            font-family: 'Noto Sans SC', sans-serif;
           }
         }
-        @layer components {
-          .block-shadow {
-            box-shadow: inset -4px -4px 0px rgba(0,0,0,0.1), 4px 4px 0px rgba(0,0,0,0.05);
-          }
+        .glass-card {
+          @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-xl;
+        }
+        .block-shadow {
+          box-shadow: inset -4px -4px 0px rgba(0,0,0,0.1), 4px 4px 0px rgba(255,255,255,0.3);
         }
     </style>
 <script type="importmap">
@@ -61,7 +62,8 @@
 }
 </script>
 </head>
-<body class="min-h-screen">
+<body>
     <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>
