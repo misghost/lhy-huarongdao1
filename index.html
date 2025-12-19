@@ -5,19 +5,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧算术华容道</title>
-    <!-- 生产环境：使用本地编译的静态 CSS（由 build.sh 生成） -->
-    <link href="./dist/output.css" rel="stylesheet">
+    
+    <!-- 环境变量垫片 -->
+    <script>
+      window.process = { env: { API_KEY: "" } };
+    </script>
+
+    <!-- 开发/预览环境：使用 CDN 确保 UI 正常显示 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind 配置：确保 CDN 模式下也能使用自定义颜色 -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              morandi: {
+                orange: '#E29578',
+                green: '#84A59D',
+                red: '#F28482',
+                pink: '#F5CAC3',
+                cream: '#F7EDE2',
+                lightblue: '#A8dadc',
+                darkblue: '#457b9d',
+                yellowgreen: '#D4E09B',
+              }
+            }
+          }
+        }
+      }
+    </script>
     
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
+    <style type="text/tailwindcss">
+        @layer base {
+          body {
+            @apply bg-[#f0f2f5] overflow-x-hidden overflow-y-auto;
             font-family: 'Noto Sans SC', 'SimHei', 'Microsoft YaHei', sans-serif;
-            background-color: #f0f2f5;
-            overflow-x: hidden;
-            overflow-y: auto;
+          }
         }
-        .block-shadow {
+        @layer components {
+          .block-shadow {
             box-shadow: inset -4px -4px 0px rgba(0,0,0,0.1), 4px 4px 0px rgba(0,0,0,0.05);
+          }
         }
     </style>
 <script type="importmap">

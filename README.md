@@ -1,57 +1,60 @@
-# 智慧算术华容道 (Smart Arithmetic Klotski) - 生产环境部署指南
 
-如果你在浏览器中看到 `output.css 404` 错误，这是因为生产环境不再依赖在线 CDN，需要你在服务器上手动生成一次静态 CSS 文件。
+# 智慧算术华容道 (Smart Arithmetic Klotski) - 部署与修复指南
+
+如果你看到 `dist/output.css` 404 错误，通常是因为服务器上还没有物理生成这个文件，或者 Nginx 权限不足。
 
 ---
 
-## 🚀 修复 404 错误并完成部署
+## 🛠️ 修复 404 错误步骤
 
-### 1. 执行构建脚本 (核心)
-在你的 Ubuntu 服务器终端中，进入项目目录并运行：
+### 1. 运行构建脚本
+在你的 Ubuntu 服务器终端，进入项目目录执行以下命令：
 ```bash
-cd /var/www/smart-klotski
-
-# 确保脚本有执行权限
+# 赋予脚本执行权限
 chmod +x build.sh
 
-# 运行构建脚本
+# 执行构建（会自动下载编译器并生成 CSS）
 ./build.sh
 ```
-**脚本会自动完成以下操作：**
-- 下载官方 Tailwind 编译器。
-- 扫描你的代码中用到的所有 CSS 类。
-- 生成压缩后的 `dist/output.css`。
+运行完成后，确认文件已生成：`ls -l dist/output.css`
 
-### 2. 验证文件生成
-运行以下命令确认文件已存在：
+### 2. 设置目录权限 (非常重要)
+Nginx 需要 `www-data` 用户权限才能读取新生成的 `dist` 目录。
 ```bash
-ls -l dist/output.css
-```
-如果看到文件信息，说明编译成功。
-
-### 3. Nginx 权限检查
-确保 Nginx 进程有权读取生成的文件夹和文件：
-```bash
+# 将项目目录所有权交给 Nginx 用户
 sudo chown -R www-data:www-data /var/www/smart-klotski
-sudo chmod -R 755 /var/www/smart-klotski
+
+# 设置标准文件夹权限
+sudo find /var/www/smart-klotski -type d -exec chmod 755 {} \;
+
+# 设置标准文件权限
+sudo find /var/www/smart-klotski -type f -exec chmod 644 {} \;
 ```
 
-### 4. 刷新浏览器
-回到浏览器，**强制刷新**（Ctrl + F5），404 错误消失，界面恢复正常。
+### 3. 配置 API Key
+手动编辑 `index.html`，将你的 Gemini API Key 填入以下位置：
+```javascript
+window.process = { env: { API_KEY: "在此处填入你的API_KEY" } };
+```
 
 ---
 
-## 🔑 API_KEY 注入提醒
-在 `index.html` 的 `<head>` 标签内，请务必手动填入你的密钥，否则 AI 导师功能将无法使用：
-```html
-<script>window.process = { env: { API_KEY: '你的实际API密钥' } };</script>
+## 🚀 Nginx 配置检查 (Ubuntu 24.04)
+确保你的 `/etc/nginx/sites-available/smart-klotski` 配置文件正确指向了根目录：
+```nginx
+server {
+    listen 80;
+    server_name 你的服务器IP;
+    root /var/www/smart-klotski;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
 ```
-
----
-
-## 🛠️ 后续维护
-如果你修改了 `App.tsx` 中的 UI 样式（例如改变了颜色或边距），你需要再次运行 `./build.sh` 来更新 `output.css`。
+修改后记得重启：`sudo systemctl restart nginx`
 
 ---
 **人工智能程序设计作品**
-作者：刘桓语 | 运行环境：Ubuntu 24.04 LTS + Nginx + Tailwind CLI
+作者：刘桓语
